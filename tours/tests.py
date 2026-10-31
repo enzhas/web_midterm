@@ -37,3 +37,26 @@ class TourOperatorTests(APITestCase):
 
     def test_database_health(self):
         self.assertEqual(self.client.get("/api/health/").data, {"status": "ok", "database": "postgresql"})
+
+    def test_tour_filters_and_ordering(self):
+        first = self.client.post('/api/tours/', self.tour).data
+        second = self.client.post('/api/tours/', dict(self.tour, title='Other', destination='Turkey', price='299.00', is_active=False)).data
+        response = self.client.get('/api/tours/', {'destination': 'KAZ', 'is_active': 'true', 'min_price': '149', 'max_price': '149'})
+        self.assertEqual([row['id'] for row in response.data], [first['id']])
+        self.assertEqual([row['id'] for row in self.client.get('/api/tours/', {'is_active': 'false'}).data], [second['id']])
+        self.assertEqual([row['id'] for row in self.client.get('/api/tours/', {'ordering': '-price'}).data], [second['id'], first['id']])
+        self.assertEqual(self.client.get('/api/tours/', {'destination': 'missing'}).data, [])
+        for query in [{'min_price': '-1'}, {'max_price': 'bad'}, {'min_price': '300', 'max_price': '100'}, {'is_active': 'maybe'}, {'ordering': 'unknown'}]:
+            self.assertEqual(self.client.get('/api/tours/', query).status_code, 400)
+
+    def test_booking_filters(self):
+        tour = self.client.post('/api/tours/', self.tour).data
+        other = self.client.post('/api/tours/', dict(self.tour, title='Other')).data
+        booking = {'tour': tour['id'], 'customer_name': 'Aida', 'customer_email': 'aida@example.com', 'guests': 2}
+        target = self.client.post('/api/bookings/', dict(booking, status='confirmed')).data
+        self.client.post('/api/bookings/', booking)
+        self.client.post('/api/bookings/', dict(booking, tour=other['id'], status='confirmed'))
+        response = self.client.get('/api/bookings/', {'tour': tour['id'], 'status': 'confirmed'})
+        self.assertEqual([row['id'] for row in response.data], [target['id']])
+        for query in [{'tour': 0}, {'tour': 'bad'}, {'status': 'unknown'}]:
+            self.assertEqual(self.client.get('/api/bookings/', query).status_code, 400)

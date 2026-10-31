@@ -60,3 +60,26 @@ Create returns the supplied data with generated fields. GET/PUT/PATCH return the
 - 503: health check cannot reach PostgreSQL: `{"status":"unavailable"}`.
 
 `max_guests` describes a tour group; this demo records booking requests and does not allocate inventory or enforce total booked capacity. Inactive tours and past dates can still be referenced. There are no payments, login, or automatic price calculations.
+
+## List filters and sorting
+
+All filters are optional and combine using AND. They apply only to list endpoints. Unknown query parameters are ignored. Invalid supported values return 400; no matches returns `[]`.
+
+| Endpoint | Parameter | Meaning |
+| --- | --- | --- |
+| `/api/tours/` | `destination` | Case-insensitive substring match |
+| `/api/tours/` | `is_active` | Boolean `true` or `false` |
+| `/api/tours/` | `min_price` | Inclusive nonnegative minimum price |
+| `/api/tours/` | `max_price` | Inclusive nonnegative maximum price; must be at least min_price |
+| `/api/tours/` | `ordering` | `price`, `-price`, `start_date`, `-start_date`, `title`, `-title` |
+| `/api/bookings/` | `tour` | Positive tour ID; a nonexistent ID returns an empty list |
+| `/api/bookings/` | `status` | `pending`, `confirmed`, or `cancelled` |
+
+Default ordering is by ID. A minus sign sorts descending; ID breaks ties.
+
+Examples:
+
+```text
+GET /api/tours/?destination=Kazakhstan&is_active=true&min_price=100&max_price=250&ordering=price
+GET /api/bookings/?tour=1&status=confirmed
+```

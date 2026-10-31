@@ -111,6 +111,26 @@
       ]
     },
     {
+      "name": "Filter tours",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/tours/?destination=Kazakhstan&is_active=true&min_price=100&max_price=200&ordering=price"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Matching demo record is returned\", () => pm.expect(pm.response.json().length).to.be.above(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "Get tour",
       "request": {
         "method": "GET",
@@ -243,6 +263,26 @@
             "type": "text/javascript",
             "exec": [
               "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Filter bookings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/bookings/?tour={{tour_id}}&status=pending"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Matching demo record is returned\", () => pm.expect(pm.response.json().length).to.be.above(0));"
             ]
           }
         }

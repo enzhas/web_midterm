@@ -75,3 +75,7 @@ After modifying Python code, run `docker compose up --build -d` because source f
 ## Submission
 
 Publish these source files to your public GitHub repository, then submit the repository URL and a ZIP including `.env`. A `submission.zip` is provided locally and excluded from Git and the Docker build. Upload your work and press **Turn in** before your assignment deadline. GitHub publication and LMS submission require your account.
+
+## Filtering
+
+Tour lists support `destination`, `is_active`, `min_price`, `max_price`, and `ordering`. Booking lists support `tour` and `status`. Combine query parameters with `&`; see [API documentation](docs/API.md#list-filters-and-sorting) and the filter requests in Postman.

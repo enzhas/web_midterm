@@ -5,7 +5,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Booking, Tour
-from .serializers import BookingSerializer, TourSerializer
+from .serializers import BookingSerializer, TourSerializer, TourFilterSerializer, BookingFilterSerializer
 
 
 @api_view(["GET"])
@@ -27,6 +27,20 @@ class TourViewSet(viewsets.ModelViewSet):
     queryset = Tour.objects.all()
     serializer_class = TourSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.action != "list":
+            return queryset
+        query = TourFilterSerializer(data=self.request.query_params)
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        for parameter, lookup in [("destination", "destination__icontains"), ("is_active", "is_active"), ("min_price", "price__gte"), ("max_price", "price__lte")]:
+            if parameter in params:
+                queryset = queryset.filter(**{lookup: params[parameter]})
+        if "ordering" in params:
+            queryset = queryset.order_by(params["ordering"], "id")
+        return queryset
+
     def destroy(self, request, *args, **kwargs):
         try:
             return super().destroy(request, *args, **kwargs)
@@ -37,6 +51,19 @@ class TourViewSet(viewsets.ModelViewSet):
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.select_related("tour").all()
     serializer_class = BookingSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.action != "list":
+            return queryset
+        query = BookingFilterSerializer(data=self.request.query_params)
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        if "tour" in params:
+            queryset = queryset.filter(tour_id=params["tour"])
+        if "status" in params:
+            queryset = queryset.filter(status=params["status"])
+        return queryset
 
 
 def not_found(request, exception):
